@@ -24,9 +24,9 @@ jobs:
                                 wget libfuse2
 
     - name: Allocate Swap Space (Prevent OOM Killer)
-      # GTK4 + LTO requires massive RAM. This prevents the pipeline from crashing.
+      # GTK4 + LTO requires massive RAM. dd is used instead of fallocate for GitHub Actions compatibility.
       run: |
-        sudo fallocate -l 4G /swapfile
+        sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
         sudo chmod 600 /swapfile
         sudo mkswap /swapfile
         sudo swapon /swapfile
