@@ -8,7 +8,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    # Upgraded to 24.04 to get GTK >= 4.12 in the apt repositories
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Checkout repository
@@ -32,7 +33,6 @@ jobs:
 
     - name: Build Release Binary
       working-directory: ./crucible-rs
-      # Restricting to 2 jobs (-j 2) prevents parallel crate compilation from exceeding the 8GB RAM limit
       run: cargo build --release
 
     - name: Package into AppImage
@@ -46,7 +46,7 @@ jobs:
         mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps
         cp target/release/crucible AppDir/usr/bin/
 
-        # Create a dummy .desktop file (linuxdeploy requires this to build an AppImage)
+        # Create a dummy .desktop file
         cat <<EOF > AppDir/usr/share/applications/crucible.desktop
         [Desktop Entry]
         Type=Application
@@ -56,7 +56,7 @@ jobs:
         Categories=Game;Utility;
         EOF
 
-        # Create a dummy icon file to satisfy linuxdeploy
+        # Create a dummy icon file
         touch AppDir/usr/share/icons/hicolor/256x256/apps/crucible.png
 
         # Run linuxdeploy to generate the final .AppImage file
