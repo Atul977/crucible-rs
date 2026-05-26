@@ -1,0 +1,83 @@
+name: Build and Package AppImage
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    # Use ubuntu-22.04 to ensure broad glibc compatibility for the AppImage
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install System Dependencies
+      # Note: libfuse2 is required to run AppImages (like linuxdeploy) on the runner
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libpango1.0-dev \
+                                libgdk-pixbuf-2.0-dev libgraphene-1.0-dev pkg-config \
+                                wget libfuse2
+
+    - name: Allocate Swap Space (Prevent OOM Killer)
+      # GTK4 + LTO requires massive RAM. This prevents the pipeline from crashing.
+      run: |
+        sudo fallocate -l 4G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+
+    - name: Install stable Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Set up Rust cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: "crucible-gtk4-release"
+        workspaces: "./crucible-rs -> target"
+
+    - name: Build Release Binary
+      # Execute cargo commands inside the inner project folder
+      working-directory: ./crucible-rs
+      run: cargo build --release
+
+    - name: Package into AppImage
+      working-directory: ./crucible-rs
+      run: |
+        # Download linuxdeploy
+        wget -c https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+
+        # Create the AppDir structure
+        mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps
+        cp target/release/crucible AppDir/usr/bin/
+
+        # Create a dummy .desktop file (linuxdeploy requires this to build an AppImage)
+        # You should replace this with a real desktop file in your repo later!
+        cat <<EOF > AppDir/usr/share/applications/crucible.desktop
+        [Desktop Entry]
+        Type=Application
+        Name=Crucible
+        Exec=crucible
+        Icon=crucible
+        Categories=Game;Utility;
+        EOF
+
+        # Create a dummy icon file to satisfy linuxdeploy
+        touch AppDir/usr/share/icons/hicolor/256x256/apps/crucible.png
+
+        # Run linuxdeploy to generate the final .AppImage file
+        export OUTPUT=Crucible-x86_64.AppImage
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+
+    - name: Upload AppImage Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Crucible-AppImage
+        # Points to the AppImage generated in the previous step
+        path: ./crucible-rs/Crucible-x86_64.AppImage
+        if-no-files-found: error
