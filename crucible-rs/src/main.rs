@@ -53,7 +53,8 @@ fn headless_launch(name: &str) {
         .enable_all().build().expect("tokio rt");
     let state = ui::state::AppState::new();
     let mut st = state.lock().unwrap();
-    if let Err(e) = st.launcher.launch(&st.gm, name) {
+    let st_ref = &mut *st;
+    if let Err(e) = st_ref.launcher.launch(&st_ref.gm, name) {
         eprintln!("Failed to launch '{name}': {e}");
         process::exit(1);
     }

@@ -1,6 +1,6 @@
 // src/core/process.rs — Process lifecycle: double-fork, stop, scan /proc.
 // Uses only libc directly for fd ops to avoid nix feature issues.
-
+use std::os::fd::AsRawFd;
 use std::collections::HashSet;
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -16,32 +16,32 @@ pub fn detached_fork(
     cwd: &str,
     log_path: &Path,
 ) -> u32 {
-    use nix::unistd::{fork, ForkResult, setsid, pipe, close, read, write, dup2, execvpe};
+    use nix::unistd::{fork, ForkResult, setsid, pipe, read, write, execvpe};
 
     let (r, w) = pipe().expect("pipe");
 
     match unsafe { fork() }.expect("fork") {
-        ForkResult::Parent { child } => {
-            let _ = close(w);
-            let mut buf = [0u8; 32];
-            let n = read(r, &mut buf).unwrap_or(0);
-            let _ = close(r);
-            let _ = nix::sys::wait::waitpid(child, None);
-            String::from_utf8_lossy(&buf[..n]).trim().parse::<u32>().unwrap_or(0)
-        }
-        ForkResult::Child => {
-            let _ = close(r);
-            let _ = setsid();
+    ForkResult::Parent { child } => {
+        drop(w); // Replaces close(w)
+        let mut buf = [0u8; 32];
+        let n = read(r.as_raw_fd(), &mut buf).unwrap_or(0);
+        drop(r); // Replaces close(r)
+        let _ = nix::sys::wait::waitpid(child, None);
+        String::from_utf8_lossy(&buf[..n]).trim().parse::<u32>().unwrap_or(0)
+    }
+    ForkResult::Child => {
+        drop(r);
+        let _ = setsid();
 
-            match unsafe { fork() }.expect("fork2") {
-                ForkResult::Parent { child } => {
-                    let pid_s = child.as_raw().to_string();
-                    let _ = write(w, pid_s.as_bytes());
-                    let _ = close(w);
-                    std::process::exit(0);
-                }
-                ForkResult::Child => {
-                    let _ = close(w);
+        match unsafe { fork() }.expect("fork2") {
+            ForkResult::Parent { child } => {
+                let pid_s = child.as_raw().to_string();
+                let _ = write(w.as_raw_fd(), pid_s.as_bytes());
+                drop(w);
+                std::process::exit(0);
+            }
+            ForkResult::Child => {
+                drop(w);
 
                     // Redirect fd 0 → /dev/null, fd 1+2 → log file using raw libc
                     unsafe {

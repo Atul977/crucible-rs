@@ -21,6 +21,8 @@ impl GameDialog {
     pub fn new(parent: Option<&gtk4::Window>, game_name: &str, state: SharedState) -> Self {
         let dialog = libadwaita::Dialog::new();
         dialog.set_title(game_name);
+	dialog.set_content_width(620);
+        dialog.set_content_height(640);
         dialog.set_default_size(620, 640);
         dialog.set_can_close(true);
         dialog.set_focus_on_click(true);
@@ -79,10 +81,6 @@ impl GameDialog {
             });
         }
 
-        if let Some(p) = parent {
-            dialog.set_transient_for(Some(p));
-        }
-
         GameDialog { dialog }
     }
 
@@ -94,7 +92,7 @@ impl GameDialog {
 fn pref_row(label: &str) -> (libadwaita::ActionRow, gtk4::Widget) {
     let row = libadwaita::ActionRow::new();
     row.set_title(label);
-    (row, gtk4::Widget::new())
+    (row, gtk4::Box::new(gtk4::Orientation::Horizontal, 0).upcast())
 }
 
 fn entry_row(title: &str, val: &str) -> libadwaita::EntryRow {

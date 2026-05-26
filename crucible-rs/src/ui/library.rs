@@ -308,7 +308,8 @@ fn make_game_card(game: &GameConfig, state: SharedState) -> gtk4::Widget {
     play_btn.connect_clicked(move |_| {
         let name = game_name.clone();
         let mut st = state_play.lock().unwrap();
-        match st.launcher.launch(&st.gm, &name) {
+        let st_ref = &mut *st;
+        match st_ref.launcher.launch(&st_ref.gm, &name) {
             Ok(()) => {
                 play_btn2.set_visible(false);
                 stop_btn2.set_visible(true);

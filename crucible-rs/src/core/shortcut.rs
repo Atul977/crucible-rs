@@ -93,7 +93,7 @@ impl ShortcutManager {
         if !Path::new(&appimage).exists() { return }
         let dir = Self::desktop_dir();
         let _ = std::fs::create_dir_all(&dir);
-        let icon = if let Ok(appdir) = std::env::var("APPDIR") {
+        let icon: String = if let Ok(appdir) = std::env::var("APPDIR") {
             let src = PathBuf::from(appdir).join("crucible.png");
             if src.exists() {
                 let dst = dirs::home_dir().unwrap_or_default()

@@ -45,7 +45,7 @@ env_logger = "0.11"
 # Valid nix 0.29 features (verified from compiler output):
 # process=waitpid/fork, signal=kill/Signal, resource=getrlimit
 # unistd/fcntl/errno/stat are always compiled — no feature flag needed
-nix  = { version = "0.29", features = ["process", "signal", "resource"] }
+nix = { version = "0.29", features = ["process", "signal", "resource", "fs"] }
 libc = "0.2"   # raw fd ops (open/dup2/close) used in double-fork
 dirs    = "5"
 uuid    = { version = "1", features = ["v4"] }

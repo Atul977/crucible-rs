@@ -159,8 +159,8 @@ pub fn validate_prefix(prefix: &Path) -> Option<String> {
     else {
         Some(format!(
             "Wine prefix appears corrupted — missing: {}\nPath: {}",
-            missing.iter().map(|s| *s).collect::<Vec<_>>().join(", "),
-            prefix.display()
+             missing.iter().copied().collect::<Vec<&str>>().join(", "),
+             prefix.display()
         ))
     }
 }

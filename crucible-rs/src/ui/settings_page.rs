@@ -266,7 +266,7 @@ impl SettingsPage {
 
             // Toast
             drop(st);
-            show_toast(btn, "Settings saved");
+	    show_toast(btn.upcast_ref::<gtk4::Widget>(), "Settings saved");
         });
 
         Self { root: toolbar.upcast() }
