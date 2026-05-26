@@ -36,7 +36,7 @@ pub fn detached_fork(
         match unsafe { fork() }.expect("fork2") {
             ForkResult::Parent { child } => {
                 let pid_s = child.as_raw().to_string();
-                let _ = write(w.as_raw_fd(), pid_s.as_bytes());
+		let _ = write(&w, pid_s.as_bytes());
                 drop(w);
                 std::process::exit(0);
             }

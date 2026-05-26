@@ -241,7 +241,8 @@ impl SettingsPage {
             let is_default = new_dir.starts_with("Not set");
             st.prefs.custom_proton_dir = if is_default { String::new() } else { new_dir.clone() };
             st.extra_proton_dirs = if is_default { vec![] } else { vec![PathBuf::from(&new_dir)] };
-            st.launcher.set_extra_proton_dirs(st.extra_proton_dirs.clone());
+            let extra = st.extra_proton_dirs.clone();
+	    st.launcher.set_extra_proton_dirs(extra);
             st.prefs.save();
 
             // GlobalConfig

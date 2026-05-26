@@ -23,7 +23,6 @@ impl GameDialog {
         dialog.set_title(game_name);
 	dialog.set_content_width(620);
         dialog.set_content_height(640);
-        dialog.set_default_size(620, 640);
         dialog.set_can_close(true);
         dialog.set_focus_on_click(true);
 
@@ -444,10 +443,6 @@ fn build_advanced_tab(
     let gs_cursor_row = switch_row("Force Grab Cursor", "", gs.enable_force_grab_cursor);
     let gs_extra_row  = entry_row("Extra Options",   &gs.additional_options);
 
-    for r in [&gs_win_row, &gs_gw_row as &dyn IsA<gtk4::Widget>, &gs_gh_row, &gs_uw_row,
-              &gs_uh_row, &gs_upsc_row, &gs_fps_row, &gs_fpsnf_row, &gs_extra_row] {
-        // each is a libadwaita widget, so we add them to the group by trait dispatch
-    }
     gs_group.add(&gs_win_row);
     gs_group.add(&gs_gw_row);
     gs_group.add(&gs_gh_row);
